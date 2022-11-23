@@ -28,7 +28,7 @@
 
 <center>
 
-![avatar](./img/insert_1.jpg)
+![image](./img/insert_1.jpg)
 
 </center>
 
@@ -39,7 +39,7 @@
 
 <center>
 
-![avatar](./img/insert_2.jpg)
+![image](./img/insert_2.jpg)
 
 </center>
 
@@ -49,7 +49,7 @@
 
 <center>
 
-![avatar](./img/insert_3.jpg)
+![image](./img/insert_3.jpg)
 
 </center>
 
@@ -59,7 +59,7 @@
 
 <center>
 
-![avatar](./img/insert_4.jpg)
+![image](./img/insert_4.jpg)
 
 </center>
 
@@ -69,7 +69,7 @@
 
 <center>
 
-![avatar](./img/insert_5.jpg)
+![image](./img/insert_5.jpg)
 
 </center>
 
@@ -88,7 +88,7 @@
 **示例：**
 <center>
 
-![avatar](./img/delete_1.jpg)
+![image](./img/delete_1.jpg)
 
 </center>
 
@@ -104,8 +104,8 @@
 
 <center>
 
-![avatar](./img/delete_2.jpg)
-![avatar](./img/delete_3.jpg)
+![image](./img/delete_2.jpg)
+![image](./img/delete_3.jpg)
 
 </center>
 
@@ -120,8 +120,8 @@
 
 <center>
 
-![avatar](./img/delete_4.jpg)
-![avatar](./img/delete_5.jpg)
+![image](./img/delete_4.jpg)
+![image](./img/delete_5.jpg)
 
 </center>
 
@@ -137,8 +137,8 @@
 
 <center>
 
-![avatar](./img/delete_6.jpg)
-![avatar](./img/delete_7.jpg)
+![image](./img/delete_6.jpg)
+![image](./img/delete_7.jpg)
 
 </center>
 
@@ -154,8 +154,8 @@
 
 <center>
 
-![avatar](./img/delete_8.jpg)
-![avatar](./img/delete_9.jpg)
+![image](./img/delete_8.jpg)
+![image](./img/delete_9.jpg)
 
 </center>
 
@@ -169,7 +169,7 @@
 
 <center>
 
-![avatar](./img/delete_10.jpg)
+![image](./img/delete_10.jpg)
 
 </center>
 
