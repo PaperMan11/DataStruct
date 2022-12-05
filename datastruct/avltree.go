@@ -4,36 +4,6 @@ import (
 	"fmt"
 )
 
-// queue 层序遍历用
-type queue struct {
-	arr   [100]*TreeNode
-	size  int
-	cap   int
-	front int
-	tail  int
-}
-
-func (q *queue) push(e *TreeNode) {
-	if q.size == q.cap {
-		fmt.Println("queue full")
-	} else {
-		q.arr[q.tail] = e
-		q.tail = (q.tail + 1) % q.cap
-		q.size++
-	}
-}
-
-func (q *queue) pop() *TreeNode {
-	if q.size == 0 {
-		fmt.Println("queue empty")
-		return nil
-	}
-	i := q.arr[q.front]
-	q.front = (q.front + 1) % q.cap
-	q.size--
-	return i
-}
-
 /***************AVL Tree****************/
 
 type ElemType int
@@ -225,24 +195,18 @@ func (tree *AvlTree) SqcTraversal(root *TreeNode) {
 	if root == nil {
 		return
 	}
-	queue := queue{
-		size:  0,
-		cap:   100,
-		front: 0,
-		tail:  0,
-	}
-	queue.push(root)
-	for queue.size != 0 {
-		size := queue.size
+	queue := NewQueue(10)
+	queue.Push(root)
+	for queue.Size() != 0 {
+		size := queue.Size()
 		for i := 0; i < size; i++ {
-			val := queue.arr[queue.front]
+			val := queue.Pop().(*TreeNode)
 			fmt.Print(val.data, " ")
-			queue.pop()
 			if val.left != nil {
-				queue.push(val.left)
+				queue.Push(val.left)
 			}
 			if val.right != nil {
-				queue.push(val.right)
+				queue.Push(val.right)
 			}
 		}
 	}
