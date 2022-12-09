@@ -5,9 +5,7 @@ import (
 	"testing"
 )
 
-// TODO: 三阶四阶 B 树删除有问题
-
-func TestBtree(t *testing.T) {
+func TestBTree(t *testing.T) {
 	btree := NewBTree(5)
 	// for i := 0; i < 11; i++ {
 	// 	btree.Insert(int64(i), i)
@@ -42,10 +40,9 @@ func TestBtree(t *testing.T) {
 	btree.Delete(97)
 	btree.Delete(41)
 	btree.Delete(53)
-	btree.Delete(13)
-	btree.Delete(21)
-	btree.Delete(40)
-	btree.PrintTreeInLog()
+	// btree.Delete(13)
+	// btree.Delete(21)
+	// btree.Delete(40)
 	// btree.Delete(30)
 	// btree.Delete(27)
 	// btree.Delete(33)
@@ -60,19 +57,21 @@ func TestBtree(t *testing.T) {
 	// btree.Delete(23)
 	// btree.Delete(31)
 	// btree.Delete(32)
+	btree.PrintTreeInLog()
 	fmt.Println("--------------添加后-----------------")
+	// 添加重复的 key 直接修改 value
 	btree.Insert(39, 39)
 	btree.Insert(22, 22)
 	btree.Insert(97, 97)
 	btree.Insert(41, 41)
 	btree.Insert(53, 53)
-	btree.Insert(13, 13)
-	btree.Insert(21, 21)
-	btree.Insert(40, 40)
+	btree.Insert(13, -1)
+	btree.Insert(21, -1)
+	btree.Insert(40, -1)
 	btree.PrintTreeInLog()
 }
 
-func TestSil(t *testing.T) {
+func TestSlice(t *testing.T) {
 	s1 := make([]int, 5)
 	s2 := make([]int, 5)
 	s1[0] = 7
@@ -84,6 +83,7 @@ func TestSil(t *testing.T) {
 	copy(s1[:], s2[:0])
 	copy(s1[1:], s2[0:])
 	fmt.Println(s1)
-	copy(s1[1:2], s1[:2])
+	copy(s1[4:], s1[5:])
 	fmt.Println(s1)
 }
+
