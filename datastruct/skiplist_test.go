@@ -6,14 +6,14 @@ import (
 )
 
 func TestSkipList(t *testing.T) {
-	sl := NewSkipLinked(20, 1)
+	sl := NewSkipLinked[string](20, 1)
 	for i := 1; i < 10; i++ {
 		kv := fmt.Sprintf("%d", i)
 		sl.Add(kv, float64(i+10), kv)
 	}
 	sl.Println()
 	if b, i := sl.Search("1"); b {
-		fmt.Println(i.(*Node).Val)
+		fmt.Println(i.(*Node[string]).Val)
 	}
 
 	sl.Erase("1")
