@@ -10,7 +10,9 @@ import (
 
 const (
 	// 扩容因子
-	expanFactor = 0.75
+	HASHMAP_LOAD_FACTOR  = 0.7 // 扩容因子
+	HASHMAP_DEFAULT_SIZE = 16  // 默认大小
+	REHASH_STEP          = 10  // 每次操作迁移的节点数量
 )
 
 // 哈希表
@@ -119,7 +121,7 @@ func (m *HashMap) Put(key string, value interface{}) {
 	newLen := m.len + 1
 
 	// 如果超出扩容因子，需要扩容
-	if float64(newLen)/float64(m.capacity) >= expanFactor {
+	if float64(newLen)/float64(m.capacity) >= HASHMAP_LOAD_FACTOR {
 		// 新建一个原来两倍大小的哈希表
 		newM := new(HashMap)
 		newM.array = make([]*keyPairs, 2*m.capacity)

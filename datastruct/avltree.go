@@ -33,17 +33,19 @@ func (tree *AvlTree) rightRotate(node *TreeNode) (l *TreeNode) {
 	node.left = l.right
 	l.right = node
 
-	if tree.nodeHeight(node.left) < tree.nodeHeight(node.right) {
+	/*if tree.nodeHeight(node.left) < tree.nodeHeight(node.right) {
 		node.height = tree.nodeHeight(node.right) + 1
 	} else {
 		node.height = tree.nodeHeight(node.left) + 1
-	}
+	}*/
+	node.height = max(tree.nodeHeight(node.left), tree.nodeHeight(node.right)) + 1
 
-	if tree.nodeHeight(l.left) < tree.nodeHeight(l.right) {
+	/*if tree.nodeHeight(l.left) < tree.nodeHeight(l.right) {
 		l.height = tree.nodeHeight(l.right) + 1
 	} else {
 		l.height = tree.nodeHeight(l.left) + 1
-	}
+	}*/
+	l.height = max(tree.nodeHeight(node.left), tree.nodeHeight(node.right)) + 1
 
 	return l
 }
@@ -100,6 +102,7 @@ func (tree *AvlTree) InsertTreeNode(node *TreeNode, e ElemType) *TreeNode {
 			}
 		} else {
 			fmt.Println("InsertTreeNode failed")
+			return node
 		}
 	}
 	if node != nil { // 调整完树结构后，节点的高度可能发生改变
@@ -210,4 +213,18 @@ func (tree *AvlTree) SqcTraversal(root *TreeNode) {
 			}
 		}
 	}
+}
+
+func (tree *AvlTree) IsBalanced() bool {
+	return tree.isBalancedTree(tree.treeRoot)
+}
+
+func (tree *AvlTree) isBalancedTree(root *TreeNode) bool {
+	if root == nil {
+		return true
+	}
+	if tree.nodeBf(root) > 1 || tree.nodeBf(root) < -1 {
+		return false
+	}
+	return tree.isBalancedTree(root.left) && tree.isBalancedTree(root.right)
 }
