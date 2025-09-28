@@ -11,8 +11,8 @@ import (
 
 // 每个桶包含独立的锁和节点链表
 type bucket[U comparable, T any] struct {
-	head  *hashMapNode[U, T]
-	mutex sync.RWMutex
+	head *hashMapNode[U, T]
+	mu   sync.RWMutex
 }
 
 type hashMapNode[U comparable, T any] struct {
@@ -201,9 +201,9 @@ func (m *HashMap2[U, T]) rehash() {
 		}
 
 		oldBucket := oldBuckets[currentIdx]
-		oldBucket.mutex.Lock()
+		oldBucket.mu.Lock()
 		if oldBucket == nil || oldBucket.head == nil {
-			oldBucket.mutex.Unlock()
+			oldBucket.mu.Unlock()
 			migrated++
 			continue
 		}
@@ -211,7 +211,7 @@ func (m *HashMap2[U, T]) rehash() {
 		// 取出旧桶所有节点
 		nodes := oldBucket.head
 		oldBucket.head = nil
-		oldBucket.mutex.Unlock()
+		oldBucket.mu.Unlock()
 
 		// 迁移到新桶
 		newBuckets := m.buckets
@@ -231,10 +231,10 @@ func (m *HashMap2[U, T]) rehash() {
 				continue
 			}
 
-			newBucket.mutex.Lock()
+			newBucket.mu.Lock()
 			nodes.next = newBucket.head
 			newBucket.head = nodes
-			newBucket.mutex.Unlock()
+			newBucket.mu.Unlock()
 			nodes = next
 		}
 		atomic.AddInt32(&m.resizingNum, -1)
@@ -289,17 +289,17 @@ func (m *HashMap2[U, T]) Get(key U) (T, bool) {
 	}
 
 	newBucket := newBuckets[index]
-	newBucket.mutex.RLock()
+	newBucket.mu.RLock()
 	current := newBucket.head
 	for current != nil {
 		if current.key == key {
 			val := current.value
-			newBucket.mutex.RUnlock()
+			newBucket.mu.RUnlock()
 			return val, true
 		}
 		current = current.next
 	}
-	newBucket.mutex.RUnlock()
+	newBucket.mu.RUnlock()
 
 	// 2. 若在扩容，访问旧桶
 	if !m.isResizing.Load() {
@@ -314,17 +314,17 @@ func (m *HashMap2[U, T]) Get(key U) (T, bool) {
 	}
 
 	oldBucket := m.oldBuckets[oldIndex]
-	oldBucket.mutex.RLock()
+	oldBucket.mu.RLock()
 	current = oldBucket.head
 	for current != nil {
 		if current.key == key {
 			val := current.value
-			oldBucket.mutex.RUnlock()
+			oldBucket.mu.RUnlock()
 			return val, true
 		}
 		current = current.next
 	}
-	oldBucket.mutex.RUnlock()
+	oldBucket.mu.RUnlock()
 
 	return zero, false
 }
@@ -349,17 +349,17 @@ func (m *HashMap2[U, T]) Put(key U, value T) {
 	}
 
 	newBucket := newBuckets[index]
-	newBucket.mutex.Lock()
+	newBucket.mu.Lock()
 	current := newBucket.head
 	for current != nil {
 		if current.key == key {
 			current.value = value
-			newBucket.mutex.Unlock()
+			newBucket.mu.Unlock()
 			return
 		}
 		current = current.next
 	}
-	newBucket.mutex.Unlock()
+	newBucket.mu.Unlock()
 
 	// 2. 若在扩容，检查旧桶并更新
 	var oldBucket *bucket[U, T]
@@ -375,28 +375,28 @@ func (m *HashMap2[U, T]) Put(key U, value T) {
 	}
 
 	if oldBucket != nil {
-		oldBucket.mutex.Lock()
+		oldBucket.mu.Lock()
 		current = oldBucket.head
 		for current != nil {
 			if current.key == key {
 				current.value = value
-				oldBucket.mutex.Unlock()
+				oldBucket.mu.Unlock()
 				return
 			}
 			current = current.next
 		}
-		oldBucket.mutex.Unlock()
+		oldBucket.mu.Unlock()
 	}
 
 	// 3. 插入新节点
-	newBucket.mutex.Lock()
+	newBucket.mu.Lock()
 	newNode := &hashMapNode[U, T]{
 		key:   key,
 		value: value,
 		next:  newBucket.head,
 	}
 	newBucket.head = newNode
-	newBucket.mutex.Unlock()
+	newBucket.mu.Unlock()
 
 	atomic.AddInt32(&m.size, 1)
 }
@@ -416,7 +416,7 @@ func (m *HashMap2[U, T]) Remove(key U) bool {
 
 	if index >= 0 && index < len(newBuckets) {
 		newBucket := newBuckets[index]
-		newBucket.mutex.Lock()
+		newBucket.mu.Lock()
 
 		var prev *hashMapNode[U, T]
 		current := newBucket.head
@@ -427,14 +427,14 @@ func (m *HashMap2[U, T]) Remove(key U) bool {
 				} else {
 					prev.next = current.next
 				}
-				newBucket.mutex.Unlock()
+				newBucket.mu.Unlock()
 				atomic.AddInt32(&m.size, -1)
 				return true
 			}
 			prev = current
 			current = current.next
 		}
-		newBucket.mutex.Unlock()
+		newBucket.mu.Unlock()
 	}
 
 	// 2. 若在扩容，尝试从旧桶删除
@@ -451,7 +451,7 @@ func (m *HashMap2[U, T]) Remove(key U) bool {
 	}
 
 	if oldBucket != nil {
-		oldBucket.mutex.Lock()
+		oldBucket.mu.Lock()
 		var prev *hashMapNode[U, T]
 		current := oldBucket.head
 		for current != nil {
@@ -461,14 +461,14 @@ func (m *HashMap2[U, T]) Remove(key U) bool {
 				} else {
 					prev.next = current.next
 				}
-				oldBucket.mutex.Unlock()
+				oldBucket.mu.Unlock()
 				atomic.AddInt32(&m.size, -1)
 				return true
 			}
 			prev = current
 			current = current.next
 		}
-		oldBucket.mutex.Unlock()
+		oldBucket.mu.Unlock()
 	}
 
 	return false

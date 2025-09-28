@@ -19,7 +19,7 @@ func newIndexNode(order int) *BPNode {
 	}
 }
 
-// newLeafNode 新建叶子结点
+// newLeafNode 新建叶z子结点
 func newLeafNode(order int) *BPNode {
 	return &BPNode{
 		num:     0,
