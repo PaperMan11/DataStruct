@@ -15,6 +15,7 @@ type keyPairs[K cmp.Ordered, V any] struct {
 type BpNode[K cmp.Ordered, V any] struct {
 	isLeaf   bool              // 是否是叶子节点
 	keyPairs []*keyPairs[K, V] // 键值对
+	keys     []K               // 分隔键（非叶子节点使用）
 	children []*BpNode[K, V]   // 子节点
 	next     *BpNode[K, V]     // 叶子节点的下一个节点指针
 	order    int               // 阶
@@ -26,6 +27,7 @@ func NewBpNode[K cmp.Ordered, V any](order int, isLeaf bool) *BpNode[K, V] {
 	return &BpNode[K, V]{
 		isLeaf:   isLeaf,
 		keyPairs: make([]*keyPairs[K, V], order+1),
+		keys:     make([]K, order+1),
 		children: make([]*BpNode[K, V], order+1),
 		order:    order,
 		num:      0,
@@ -99,6 +101,8 @@ func (node *BpNode[K, V]) InsertChild(child *BpNode[K, V]) bool {
 	}
 	copy(node.children[i+1:], node.children[i:])
 	node.children[i] = child
+	copy(node.keys[i+1:], node.keys[i:])
+	node.keys[i] = child.maxKey
 	node.num++
 	node.maxKey = node.children[node.num-1].maxKey
 	return true
@@ -121,6 +125,7 @@ func (node *BpNode[K, V]) RemoveChild(child *BpNode[K, V]) bool {
 		return false
 	}
 	copy(node.children[i:], node.children[i+1:])
+	copy(node.keys[i:], node.keys[i+1:])
 	node.num--
 	node.maxKey = node.children[node.num-1].maxKey
 	return true
@@ -132,6 +137,40 @@ func (node *BpNode[K, V]) GetFirstChild() *BpNode[K, V] {
 
 func (node *BpNode[K, V]) GetLastChild() *BpNode[K, V] {
 	return node.children[node.num-1]
+}
+
+// 在叶子节点中查找键（使用二分查找）
+func (node *BpNode[K, V]) searchKey(key K) (int, bool) {
+	low, high := 0, node.num-1
+	for low <= high {
+		mid := (low + high) / 2
+		cmpResult := cmp.Compare(key, node.keyPairs[mid].Key)
+		if cmpResult == 0 {
+			return mid, true // 找到键
+		} else if cmpResult < 0 {
+			high = mid - 1
+		} else {
+			low = mid + 1
+		}
+	}
+	return low, false // 未找到，返回插入位置
+}
+
+// 非叶子节点查找子节点（使用二分查找）
+func (node *BpNode[K, V]) findChild(key K) int {
+	low, high := 0, node.num-1
+	for low <= high {
+		mid := (low + high) / 2
+		cmpResult := cmp.Compare(key, node.keys[mid])
+		if cmpResult < 0 {
+			high = mid - 1
+		} else if cmpResult > 0 {
+			low = mid + 1
+		} else {
+			return mid
+		}
+	}
+	return low
 }
 
 type BpTree[K cmp.Ordered, V any] struct {
@@ -188,6 +227,7 @@ func (tree *BpTree[K, V]) insert(node *BpNode[K, V], key K, value V) (newNode *B
 			i++
 		}
 		splitNode := tree.insert(node.children[i], key, value)
+		node.keys[i] = node.children[i].maxKey
 		if splitNode != nil {
 			if node.InsertChild(splitNode) {
 				// 节点分裂
@@ -234,6 +274,7 @@ func (tree *BpTree[K, V]) remove(node *BpNode[K, V], key K) bool {
 		if !tree.remove(child, key) {
 			return false
 		}
+		node.keys[i] = node.children[i].maxKey
 		// 节点平衡
 		if child.num < tree.minKeys {
 			var (
@@ -250,16 +291,20 @@ func (tree *BpTree[K, V]) remove(node *BpNode[K, V], key K) bool {
 			if leftSibling != nil && leftSibling.num > tree.minKeys {
 				// 尝试从左兄弟借
 				tree.borrowFromLeft(child, leftSibling)
+				node.keys[i-1] = node.children[i-1].maxKey
 			} else if rightSibling != nil && rightSibling.num > tree.minKeys {
 				// 尝试从右兄弟借
 				tree.borrowFromRight(child, rightSibling)
+				node.keys[i] = node.children[i].maxKey
 			} else if i > 0 {
 				// 与左兄弟合并
 				tree.mergeNodes(leftSibling, child)
+				node.keys[i-1] = leftSibling.maxKey
 				node.RemoveChild(child)
 			} else if i < node.num-1 {
 				// 与右兄弟合并
 				tree.mergeNodes(child, rightSibling)
+				node.keys[i] = child.maxKey
 				node.RemoveChild(rightSibling)
 			}
 		}
@@ -283,6 +328,7 @@ func (tree *BpTree[K, V]) splitNode(node *BpNode[K, V]) (newNode *BpNode[K, V]) 
 		newNode = NewBpNode[K, V](tree.order, false)
 		mid := tree.order / 2
 		copy(newNode.children[:], node.children[mid+1:])
+		copy(newNode.keys[:], node.keys[mid+1:])
 		newNode.num = node.num - mid - 1
 		newNode.maxKey = newNode.children[newNode.num-1].maxKey
 		node.num = mid + 1
@@ -299,6 +345,7 @@ func (tree *BpTree[K, V]) mergeNodes(node *BpNode[K, V], sibling *BpNode[K, V]) 
 		node.next = sibling.next
 	} else {
 		copy(node.children[node.num:], sibling.children[:sibling.num])
+		copy(node.keys[node.num:], sibling.keys[:sibling.num])
 		node.num += sibling.num
 	}
 }
@@ -349,6 +396,26 @@ func (tree *BpTree[K, V]) Search(key K) (V, bool) {
 	return zero, false
 }
 
+func (tree *BpTree[K, V]) BinarySearch(key K) (V, bool) {
+	var zero V
+	current := tree.root
+	// 找到起始叶子节点
+	for !current.isLeaf {
+		idx := current.findChild(key)
+		if idx >= current.num || current.children[idx] == nil {
+			return zero, false
+		}
+		current = current.children[idx]
+	}
+
+	// 在叶子节点中二分查找起始位置
+	pos, ok := current.searchKey(key)
+	if !ok {
+		return zero, false
+	}
+	return current.keyPairs[pos].Value, true
+}
+
 func (tree *BpTree[K, V]) RangeSearch(start K, end K) []V {
 	res := make([]V, 0)
 	current := tree.root
@@ -375,6 +442,37 @@ func (tree *BpTree[K, V]) RangeSearch(start K, end K) []V {
 	return res
 }
 
+// 优化后的范围查询
+func (tree *BpTree[K, V]) BinaryRangeSearch(start, end K) []V {
+	res := make([]V, 0)
+	current := tree.root
+
+	// 找到起始叶子节点
+	for !current.isLeaf {
+		idx := current.findChild(start)
+		if idx >= current.num || current.children[idx] == nil {
+			return res
+		}
+		current = current.children[idx]
+	}
+
+	// 在叶子节点中二分查找起始位置
+	pos, _ := current.searchKey(start)
+
+	// 遍历叶子节点收集结果
+	for current != nil {
+		for i := pos; i < current.num; i++ {
+			if current.keyPairs[i].Key > end {
+				return res
+			}
+			res = append(res, current.keyPairs[i].Value)
+		}
+		current = current.next
+		pos = 0 // 后续节点从开始处遍历
+	}
+	return res
+}
+
 // 打印树结构（用于调试）
 func (tree *BpTree[K, V]) PrintTree() {
 	if tree.size == 0 {
@@ -395,7 +493,8 @@ func (tree *BpTree[K, V]) PrintTree() {
 				if node.isLeaf {
 					levelStr += fmt.Sprintf("<%v,%v> ", node.keyPairs[j].Key, node.keyPairs[j].Value)
 				} else {
-					levelStr += fmt.Sprintf("%v ", node.children[j].maxKey)
+					//levelStr += fmt.Sprintf("%v ", node.children[j].maxKey)
+					levelStr += fmt.Sprintf("%v ", node.keys[j])
 					queue.Push(node.children[j])
 				}
 			}

@@ -134,7 +134,7 @@ func TestRangeSearch(t *testing.T) {
 	}
 
 	// 测试正常范围
-	result := tree.RangeSearch(3, 7)
+	result := tree.BinaryRangeSearch(3, 7)
 	if len(result) != 5 {
 		t.Errorf("RangeSearch(3,7) 期望得到 5 个结果，实际得到 %d", len(result))
 	}
@@ -148,13 +148,13 @@ func TestRangeSearch(t *testing.T) {
 	}
 
 	// 测试边界范围
-	result = tree.RangeSearch(1, 1)
+	result = tree.BinaryRangeSearch(1, 1)
 	if len(result) != 1 || result[0] != 1 {
 		t.Errorf("RangeSearch(1,1) 期望得到 [1]，实际得到 %v", result)
 	}
 
 	// 测试超出范围
-	result = tree.RangeSearch(11, 20)
+	result = tree.BinaryRangeSearch(11, 20)
 	if len(result) != 0 {
 		t.Errorf("RangeSearch(11,20) 期望得到空结果，实际得到 %d 个结果", len(result))
 	}
@@ -206,13 +206,13 @@ func TestStringKeys(t *testing.T) {
 	tree.Insert("date", 4)
 
 	// 测试查询
-	val, ok := tree.Search("banana")
+	val, ok := tree.BinarySearch("banana")
 	if !ok || val != 2 {
 		t.Errorf("Search(banana) 期望得到 (2, true)，实际得到 (%v, %v)", val, ok)
 	}
 
 	// 测试范围查询
-	result := tree.RangeSearch("banana", "date")
+	result := tree.BinaryRangeSearch("banana", "date")
 	if len(result) != 3 {
 		t.Errorf("RangeSearch 期望得到 3 个结果，实际得到 %d", len(result))
 	}
@@ -236,7 +236,7 @@ func TestLargeDataset(t *testing.T) {
 
 	// 随机查询一些数据
 	for i := 1; i <= count; i += 1 {
-		val, ok := tree.Search(i)
+		val, ok := tree.BinarySearch(i)
 		if !ok || val != i {
 			t.Errorf("Search(%d) 期望得到 (%d, true)，实际得到 (%v, %v)", i, i, val, ok)
 		}
